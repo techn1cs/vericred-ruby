@@ -1,134 +1,36 @@
 =begin
-Vericred API
+#Vericred API
 
-Vericred's API allows you to search for Health Plans that a specific doctor
-accepts.
-
-## Getting Started
-
-Visit our [Developer Portal](https://vericred.3scale.net) to
-create an account.
-
-Once you have created an account, you can create one Application for
-Production and another for our Sandbox (select the appropriate Plan when
-you create the Application).
-
-## Authentication
-
-To authenticate, pass the API Key you created in the Developer Portal as
-a `Vericred-Api-Key` header.
-
-`curl -H 'Vericred-Api-Key: YOUR_KEY' "https://api.vericred.com/providers?search_term=Foo&zip_code=11215"`
-
-## Versioning
-
-Vericred's API default to the latest version.  However, if you need a specific
-version, you can request it with an `Accept-Version` header.
-
-The current version is `v3`.  Previous versions are `v1` and `v2`.
-
-`curl -H 'Vericred-Api-Key: YOUR_KEY' -H 'Accept-Version: v2' "https://api.vericred.com/providers?search_term=Foo&zip_code=11215"`
-
-## Pagination
-
-Most endpoints are not paginated.  It will be noted in the documentation if/when
-an endpoint is paginated.
-
-When pagination is present, a `meta` stanza will be present in the response
-with the total number of records
-
-```
-{
-  things: [{ id: 1 }, { id: 2 }],
-  meta: { total: 500 }
-}
-```
-
-## Sideloading
-
-When we return multiple levels of an object graph (e.g. `Provider`s and their `State`s
-we sideload the associated data.  In this example, we would provide an Array of
-`State`s and a `state_id` for each provider.  This is done primarily to reduce the
-payload size since many of the `Provider`s will share a `State`
-
-```
-{
-  providers: [{ id: 1, state_id: 1}, { id: 2, state_id: 1 }],
-  states: [{ id: 1, code: 'NY' }]
-}
-```
-
-If you need the second level of the object graph, you can just match the
-corresponding id.
-
-## Selecting specific data
-
-All endpoints allow you to specify which fields you would like to return.
-This allows you to limit the response to contain only the data you need.
-
-For example, let's take a request that returns the following JSON by default
-
-```
-{
-  provider: {
-    id: 1,
-    name: 'John',
-    phone: '1234567890',
-    field_we_dont_care_about: 'value_we_dont_care_about'
-  },
-  states: [{
-    id: 1,
-    name: 'New York',
-    code: 'NY',
-    field_we_dont_care_about: 'value_we_dont_care_about'
-  }]
-}
-```
-
-To limit our results to only return the fields we care about, we specify the
-`select` query string parameter for the corresponding fields in the JSON
-document.
-
-In this case, we want to select `name` and `phone` from the `provider` key,
-so we would add the parameters `select=provider.name,provider.phone`.
-We also want the `name` and `code` from the `states` key, so we would
-add the parameters `select=states.name,staes.code`.  The id field of
-each document is always returned whether or not it is requested.
-
-Our final request would be `GET /providers/12345?select=provider.name,provider.phone,states.name,states.code`
-
-The response would be
-
-```
-{
-  provider: {
-    id: 1,
-    name: 'John',
-    phone: '1234567890'
-  },
-  states: [{
-    id: 1,
-    name: 'New York',
-    code: 'NY'
-  }]
-}
-```
-
-
+#Vericred's API allows you to search for Health Plans that a specific doctor accepts.  ## Getting Started  Visit our [Developer Portal](https://vericred.3scale.net) to create an account.  Once you have created an account, you can create one Application for Production and another for our Sandbox (select the appropriate Plan when you create the Application).  ## Authentication  To authenticate, pass the API Key you created in the Developer Portal as a `Vericred-Api-Key` header.  `curl -H 'Vericred-Api-Key: YOUR_KEY' \"https://api.vericred.com/providers?search_term=Foo&zip_code=11215\"`  ## Versioning  Vericred's API default to the latest version.  However, if you need a specific version, you can request it with an `Accept-Version` header.  The current version is `v3`.  Previous versions are `v1` and `v2`.  `curl -H 'Vericred-Api-Key: YOUR_KEY' -H 'Accept-Version: v2' \"https://api.vericred.com/providers?search_term=Foo&zip_code=11215\"`  ## Pagination  Endpoints that accept `page` and `per_page` parameters are paginated. They expose four additional fields that contain data about your position in the response, namely `Total`, `Per-Page`, `Link`, and `Page` as described in [RFC-5988](https://tools.ietf.org/html/rfc5988).  For example, to display 5 results per page and view the second page of a `GET` to `/networks`, your final request would be `GET /networks?....page=2&per_page=5`. ```  ## Sideloading  When we return multiple levels of an object graph (e.g. `Provider`s and their `State`s we sideload the associated data.  In this example, we would provide an Array of `State`s and a `state_id` for each provider.  This is done primarily to reduce the payload size since many of the `Provider`s will share a `State`  ``` {   providers: [{ id: 1, state_id: 1}, { id: 2, state_id: 1 }],   states: [{ id: 1, code: 'NY' }] } ```  If you need the second level of the object graph, you can just match the corresponding id.  ## Selecting specific data  All endpoints allow you to specify which fields you would like to return. This allows you to limit the response to contain only the data you need.  For example, let's take a request that returns the following JSON by default  ``` {   provider: {     id: 1,     name: 'John',     phone: '1234567890',     field_we_dont_care_about: 'value_we_dont_care_about'   },   states: [{     id: 1,     name: 'New York',     code: 'NY',     field_we_dont_care_about: 'value_we_dont_care_about'   }] } ```  To limit our results to only return the fields we care about, we specify the `select` query string parameter for the corresponding fields in the JSON document.  In this case, we want to select `name` and `phone` from the `provider` key, so we would add the parameters `select=provider.name,provider.phone`. We also want the `name` and `code` from the `states` key, so we would add the parameters `select=states.name,staes.code`.  The id field of each document is always returned whether or not it is requested.  Our final request would be `GET /providers/12345?select=provider.name,provider.phone,states.name,states.code`  The response would be  ``` {   provider: {     id: 1,     name: 'John',     phone: '1234567890'   },   states: [{     id: 1,     name: 'New York',     code: 'NY'   }] } ```  
 
 OpenAPI spec version: 1.0.0
 
 Generated by: https://github.com/swagger-api/swagger-codegen.git
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 =end
 
 require 'date'
 
 module VericredClient
+
   class PlanSearchResult
     # Does the plan provide dental coverage for adults?
     attr_accessor :adult_dental
+
+    # 
+    attr_accessor :age29_rider
 
     # Benefits string for ambulance coverage
     attr_accessor :ambulance
@@ -160,6 +62,9 @@ module VericredClient
     # Diagnostic tests benefit summary
     attr_accessor :diagnostic_test
 
+    # Is this a domestic plan?
+    attr_accessor :dp_rider
+
     # Link to the summary of drug benefits for the plan
     attr_accessor :drug_formulary_url
 
@@ -183,6 +88,9 @@ module VericredClient
 
     # Maximum out-of-pocket when a family is on the plan
     attr_accessor :family_medical_moop
+
+    # Is this a family plan?
+    attr_accessor :fp_rider
 
     # Cost for generic drugs
     attr_accessor :generic_drugs
@@ -322,10 +230,12 @@ module VericredClient
     # Cumulative premium amount for dependents
     attr_accessor :dependent_premium
 
+
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
         :'adult_dental' => :'adult_dental',
+        :'age29_rider' => :'age29_rider',
         :'ambulance' => :'ambulance',
         :'benefits_summary_url' => :'benefits_summary_url',
         :'buy_link' => :'buy_link',
@@ -336,6 +246,7 @@ module VericredClient
         :'customer_service_phone_number' => :'customer_service_phone_number',
         :'durable_medical_equipment' => :'durable_medical_equipment',
         :'diagnostic_test' => :'diagnostic_test',
+        :'dp_rider' => :'dp_rider',
         :'drug_formulary_url' => :'drug_formulary_url',
         :'effective_date' => :'effective_date',
         :'expiration_date' => :'expiration_date',
@@ -344,6 +255,7 @@ module VericredClient
         :'family_drug_moop' => :'family_drug_moop',
         :'family_medical_deductible' => :'family_medical_deductible',
         :'family_medical_moop' => :'family_medical_moop',
+        :'fp_rider' => :'fp_rider',
         :'generic_drugs' => :'generic_drugs',
         :'habilitation_services' => :'habilitation_services',
         :'hios_issuer_id' => :'hios_issuer_id',
@@ -397,6 +309,7 @@ module VericredClient
     def self.swagger_types
       {
         :'adult_dental' => :'BOOLEAN',
+        :'age29_rider' => :'BOOLEAN',
         :'ambulance' => :'String',
         :'benefits_summary_url' => :'String',
         :'buy_link' => :'String',
@@ -407,6 +320,7 @@ module VericredClient
         :'customer_service_phone_number' => :'String',
         :'durable_medical_equipment' => :'String',
         :'diagnostic_test' => :'String',
+        :'dp_rider' => :'BOOLEAN',
         :'drug_formulary_url' => :'String',
         :'effective_date' => :'String',
         :'expiration_date' => :'String',
@@ -415,6 +329,7 @@ module VericredClient
         :'family_drug_moop' => :'String',
         :'family_medical_deductible' => :'String',
         :'family_medical_moop' => :'String',
+        :'fp_rider' => :'BOOLEAN',
         :'generic_drugs' => :'String',
         :'habilitation_services' => :'String',
         :'hios_issuer_id' => :'String',
@@ -476,6 +391,10 @@ module VericredClient
         self.adult_dental = attributes[:'adult_dental']
       end
 
+      if attributes.has_key?(:'age29_rider')
+        self.age29_rider = attributes[:'age29_rider']
+      end
+
       if attributes.has_key?(:'ambulance')
         self.ambulance = attributes[:'ambulance']
       end
@@ -516,6 +435,10 @@ module VericredClient
         self.diagnostic_test = attributes[:'diagnostic_test']
       end
 
+      if attributes.has_key?(:'dp_rider')
+        self.dp_rider = attributes[:'dp_rider']
+      end
+
       if attributes.has_key?(:'drug_formulary_url')
         self.drug_formulary_url = attributes[:'drug_formulary_url']
       end
@@ -546,6 +469,10 @@ module VericredClient
 
       if attributes.has_key?(:'family_medical_moop')
         self.family_medical_moop = attributes[:'family_medical_moop']
+      end
+
+      if attributes.has_key?(:'fp_rider')
+        self.fp_rider = attributes[:'fp_rider']
       end
 
       if attributes.has_key?(:'generic_drugs')
@@ -748,14 +675,16 @@ module VericredClient
     # Check to see if the all the properties in the model are valid
     # @return true if the model is valid
     def valid?
+      return true
     end
 
     # Checks equality by comparing each attribute.
-    # @param [Object] Object to be compared 
+    # @param [Object] Object to be compared
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
           adult_dental == o.adult_dental &&
+          age29_rider == o.age29_rider &&
           ambulance == o.ambulance &&
           benefits_summary_url == o.benefits_summary_url &&
           buy_link == o.buy_link &&
@@ -766,6 +695,7 @@ module VericredClient
           customer_service_phone_number == o.customer_service_phone_number &&
           durable_medical_equipment == o.durable_medical_equipment &&
           diagnostic_test == o.diagnostic_test &&
+          dp_rider == o.dp_rider &&
           drug_formulary_url == o.drug_formulary_url &&
           effective_date == o.effective_date &&
           expiration_date == o.expiration_date &&
@@ -774,6 +704,7 @@ module VericredClient
           family_drug_moop == o.family_drug_moop &&
           family_medical_deductible == o.family_medical_deductible &&
           family_medical_moop == o.family_medical_moop &&
+          fp_rider == o.fp_rider &&
           generic_drugs == o.generic_drugs &&
           habilitation_services == o.habilitation_services &&
           hios_issuer_id == o.hios_issuer_id &&
@@ -823,7 +754,7 @@ module VericredClient
     end
 
     # @see the `==` method
-    # @param [Object] Object to be compared 
+    # @param [Object] Object to be compared
     def eql?(o)
       self == o
     end
@@ -831,7 +762,7 @@ module VericredClient
     # Calculates hash code according to all attributes.
     # @return [Fixnum] Hash code
     def hash
-      [adult_dental, ambulance, benefits_summary_url, buy_link, carrier_name, child_dental, child_eyewear, child_eye_exam, customer_service_phone_number, durable_medical_equipment, diagnostic_test, drug_formulary_url, effective_date, expiration_date, emergency_room, family_drug_deductible, family_drug_moop, family_medical_deductible, family_medical_moop, generic_drugs, habilitation_services, hios_issuer_id, home_health_care, hospice_service, id, imaging, in_network_ids, individual_drug_deductible, individual_drug_moop, individual_medical_deductible, individual_medical_moop, inpatient_birth, inpatient_facility, inpatient_mental_health, inpatient_physician, inpatient_substance, level, logo_url, name, non_preferred_brand_drugs, on_market, off_market, out_of_network_coverage, out_of_network_ids, outpatient_facility, outpatient_mental_health, outpatient_physician, outpatient_substance, plan_market, plan_type, preferred_brand_drugs, prenatal_postnatal_care, preventative_care, premium_subsidized, premium, primary_care_physician, rehabilitation_services, skilled_nursing, specialist, specialty_drugs, urgent_care, match_percentage, perfect_match_percentage, employee_premium, dependent_premium].hash
+      [adult_dental, age29_rider, ambulance, benefits_summary_url, buy_link, carrier_name, child_dental, child_eyewear, child_eye_exam, customer_service_phone_number, durable_medical_equipment, diagnostic_test, dp_rider, drug_formulary_url, effective_date, expiration_date, emergency_room, family_drug_deductible, family_drug_moop, family_medical_deductible, family_medical_moop, fp_rider, generic_drugs, habilitation_services, hios_issuer_id, home_health_care, hospice_service, id, imaging, in_network_ids, individual_drug_deductible, individual_drug_moop, individual_medical_deductible, individual_medical_moop, inpatient_birth, inpatient_facility, inpatient_mental_health, inpatient_physician, inpatient_substance, level, logo_url, name, non_preferred_brand_drugs, on_market, off_market, out_of_network_coverage, out_of_network_ids, outpatient_facility, outpatient_mental_health, outpatient_physician, outpatient_substance, plan_market, plan_type, preferred_brand_drugs, prenatal_postnatal_care, preventative_care, premium_subsidized, premium, primary_care_physician, rehabilitation_services, skilled_nursing, specialist, specialty_drugs, urgent_care, match_percentage, perfect_match_percentage, employee_premium, dependent_premium].hash
     end
 
     # Builds the object from hash
@@ -922,7 +853,7 @@ module VericredClient
 
     # Outputs non-array value in the form of hash
     # For object, use to_hash. Otherwise, just return the value
-    # @param [Object] value Any valid value 
+    # @param [Object] value Any valid value
     # @return [Hash] Returns the value in the form of hash
     def _to_hash(value)
       if value.is_a?(Array)
@@ -939,4 +870,5 @@ module VericredClient
     end
 
   end
+
 end
