@@ -148,19 +148,51 @@ In [this other Summary of Benefits &amp; Coverage](https://s3.amazonaws.com/veri
 Here's a description of the benefits summary string, represented as a context-free grammar:
 
 ```
-<cost-share>     ::= <tier> <opt-num-prefix> <value> <opt-per-unit> <deductible> <tier-limit> "/" <tier> <opt-num-prefix> <value> <opt-per-unit> <deductible> "|" <benefit-limit>
-<tier>           ::= "In-Network:" | "In-Network-Tier-2:" | "Out-of-Network:"
-<opt-num-prefix> ::= "first" <num> <unit> | ""
-<unit>           ::= "day(s)" | "visit(s)" | "exam(s)" | "item(s)"
-<value>          ::= <ddct_moop> | <copay> | <coinsurance> | <compound> | "unknown" | "Not Applicable"
-<compound>       ::= <copay> <deductible> "then" <coinsurance> <deductible> | <copay> <deductible> "then" <copay> <deductible> | <coinsurance> <deductible> "then" <coinsurance> <deductible>
-<copay>          ::= "$" <num>
-<coinsurace>     ::= <num> "%"
-<ddct_moop>      ::= <copay> | "Included in Medical" | "Unlimited"
-<opt-per-unit>   ::= "per day" | "per visit" | "per stay" | ""
-<deductible>     ::= "before deductible" | "after deductible" | ""
-<tier-limit>     ::= ", " <limit> | ""
-<benefit-limit>  ::= <limit> | ""
+root                      ::= coverage
+
+coverage                  ::= (simple_coverage | tiered_coverage) (space pipe space coverage_limitation)?
+tiered_coverage           ::= tier (space slash space tier)*
+tier                      ::= tier_name colon space (tier_coverage | not_applicable)
+tier_coverage             ::= simple_coverage (space (then | or | and) space simple_coverage)* tier_limitation?
+simple_coverage           ::= (pre_coverage_limitation space)? coverage_amount (space post_coverage_limitation)? (comma? space coverage_condition)?
+coverage_limitation       ::= "limit" colon space (((simple_coverage | simple_limitation) (semicolon space see_carrier_documentation)?) | see_carrier_documentation | waived_if_admitted)
+waived_if_admitted        ::= ("copay" space)? "waived if admitted"
+simple_limitation         ::= pre_coverage_limitation space "copay applies"
+tier_name                 ::= "In-Network-Tier-2" | "Out-of-Network" | "In-Network"
+tier_limitation           ::= comma space "up to" space (currency | (integer space time_unit plural?)) (space post_coverage_limitation)?
+coverage_amount           ::= currency | unlimited | included | unknown | percentage | (digits space (treatment_unit | time_unit) plural?)
+pre_coverage_limitation   ::= first space digits space time_unit plural?
+post_coverage_limitation  ::= (((then space currency) | "per condition") space)? "per" space (treatment_unit | (integer space time_unit) | time_unit) plural?
+coverage_condition        ::= ("before deductible" | "after deductible" | "penalty" | allowance | "in-state" | "out-of-state") (space allowance)?
+allowance                 ::= upto_allowance | after_allowance
+upto_allowance            ::= "up to" space (currency space)? "allowance"
+after_allowance           ::= "after" space (currency space)? "allowance"
+see_carrier_documentation ::= "see carrier documentation for more information"
+unknown                   ::= "unknown"
+unlimited                 ::= /[uU]nlimited/
+included                  ::= /[iI]ncluded in [mM]edical/
+time_unit                 ::= /[hH]our/ | (((/[cC]alendar/ | /[cC]ontract/) space)? /[yY]ear/) | /[mM]onth/ | /[dD]ay/ | /[wW]eek/ | /[vV]isit/ | /[lL]ifetime/ | ((((/[bB]enefit/ plural?) | /[eE]ligibility/) space)? /[pP]eriod/)
+treatment_unit            ::= /[pP]erson/ | /[gG]roup/ | /[cC]ondition/ | /[sS]cript/ | /[vV]isit/ | /[eE]xam/ | /[iI]tem/ | /[sS]tay/ | /[tT]reatment/ | /[aA]dmission/ | /[eE]pisode/
+comma                     ::= ","
+colon                     ::= ":"
+semicolon                 ::= ";"
+pipe                      ::= "|"
+slash                     ::= "/"
+plural                    ::= "(s)" | "s"
+then                      ::= "then" | ("," space) | space
+or                        ::= "or"
+and                       ::= "and"
+not_applicable            ::= "Not Applicable" | "N/A" | "NA"
+first                     ::= "first"
+currency                  ::= "$" number
+percentage                ::= number "%"
+number                    ::= float | integer
+float                     ::= digits "." digits
+integer                   ::= /[0-9]/+ (comma_int | under_int)*
+comma_int                 ::= ("," /[0-9]/*3) !"_"
+under_int                 ::= ("_" /[0-9]/*3) !","
+digits                    ::= /[0-9]/+ ("_" /[0-9]/+)*
+space                     ::= /[ \t]/+
 ```
 
 
@@ -353,7 +385,7 @@ module VericredClient
     # Market in which the plan is offered (on_marketplace, shop, etc)
     attr_accessor :plan_market
 
-    # Category of the plan (e.g. EPO, HMO, PPO, POS, Indemnity)
+    # Category of the plan (e.g. EPO, HMO, PPO, POS, Indemnity, PACE, Medicare-Medicaid, HMO w/POS, Cost, FFS, MSA)
     attr_accessor :plan_type
 
     # Cost under the plan for perferred brand drugs
@@ -385,6 +417,9 @@ module VericredClient
 
     # Benefits summary for skilled nursing services
     attr_accessor :skilled_nursing
+
+    # Source of the plan benefit data
+    attr_accessor :source
 
     # Cost under the plan to visit a specialist
     attr_accessor :specialist
@@ -465,6 +500,7 @@ module VericredClient
         :'rehabilitation_services' => :'rehabilitation_services',
         :'service_area_id' => :'service_area_id',
         :'skilled_nursing' => :'skilled_nursing',
+        :'source' => :'source',
         :'specialist' => :'specialist',
         :'specialty_drugs' => :'specialty_drugs',
         :'urgent_care' => :'urgent_care'
@@ -540,6 +576,7 @@ module VericredClient
         :'rehabilitation_services' => :'String',
         :'service_area_id' => :'String',
         :'skilled_nursing' => :'String',
+        :'source' => :'String',
         :'specialist' => :'String',
         :'specialty_drugs' => :'String',
         :'urgent_care' => :'String'
@@ -822,6 +859,10 @@ module VericredClient
         self.skilled_nursing = attributes[:'skilled_nursing']
       end
 
+      if attributes.has_key?(:'source')
+        self.source = attributes[:'source']
+      end
+
       if attributes.has_key?(:'specialist')
         self.specialist = attributes[:'specialist']
       end
@@ -920,6 +961,7 @@ module VericredClient
           rehabilitation_services == o.rehabilitation_services &&
           service_area_id == o.service_area_id &&
           skilled_nursing == o.skilled_nursing &&
+          source == o.source &&
           specialist == o.specialist &&
           specialty_drugs == o.specialty_drugs &&
           urgent_care == o.urgent_care
@@ -934,7 +976,7 @@ module VericredClient
     # Calculates hash code according to all attributes.
     # @return [Fixnum] Hash code
     def hash
-      [adult_dental, age29_rider, ambulance, benefits_summary_url, buy_link, carrier_name, child_dental, child_eyewear, child_eye_exam, customer_service_phone_number, durable_medical_equipment, diagnostic_test, display_name, dp_rider, drug_formulary_url, effective_date, expiration_date, emergency_room, family_drug_deductible, family_drug_moop, family_medical_deductible, family_medical_moop, fp_rider, generic_drugs, habilitation_services, hios_issuer_id, home_health_care, hospice_service, hsa_eligible, id, imaging, in_network_ids, individual_drug_deductible, individual_drug_moop, individual_medical_deductible, individual_medical_moop, inpatient_birth, inpatient_facility, inpatient_mental_health, inpatient_physician, inpatient_substance, level, logo_url, name, network_size, non_preferred_brand_drugs, on_market, off_market, out_of_network_coverage, out_of_network_ids, outpatient_facility, outpatient_mental_health, outpatient_physician, outpatient_substance, plan_market, plan_type, preferred_brand_drugs, prenatal_postnatal_care, preventative_care, premium_subsidized, premium, premium_source, primary_care_physician, rehabilitation_services, service_area_id, skilled_nursing, specialist, specialty_drugs, urgent_care].hash
+      [adult_dental, age29_rider, ambulance, benefits_summary_url, buy_link, carrier_name, child_dental, child_eyewear, child_eye_exam, customer_service_phone_number, durable_medical_equipment, diagnostic_test, display_name, dp_rider, drug_formulary_url, effective_date, expiration_date, emergency_room, family_drug_deductible, family_drug_moop, family_medical_deductible, family_medical_moop, fp_rider, generic_drugs, habilitation_services, hios_issuer_id, home_health_care, hospice_service, hsa_eligible, id, imaging, in_network_ids, individual_drug_deductible, individual_drug_moop, individual_medical_deductible, individual_medical_moop, inpatient_birth, inpatient_facility, inpatient_mental_health, inpatient_physician, inpatient_substance, level, logo_url, name, network_size, non_preferred_brand_drugs, on_market, off_market, out_of_network_coverage, out_of_network_ids, outpatient_facility, outpatient_mental_health, outpatient_physician, outpatient_substance, plan_market, plan_type, preferred_brand_drugs, prenatal_postnatal_care, preventative_care, premium_subsidized, premium, premium_source, primary_care_physician, rehabilitation_services, service_area_id, skilled_nursing, source, specialist, specialty_drugs, urgent_care].hash
     end
 
     # Builds the object from hash
